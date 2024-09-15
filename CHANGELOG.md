@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 - work on new features
 
+## [1.0.3] - 2024-09-15
+### Added/changed
+- MOD: test_basic.sh
+- MOD: indexnow.sh
+- ADD: indexnow.jpg, MOD: README.md 
+
 ## [0.0.1] - 2024-09-15
 ### Added
 - create indexnow with [pforret/bashew](https://github.com/pforret/bashew)
