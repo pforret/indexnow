@@ -144,7 +144,8 @@ function do_sitemap() {
   curl -s "$sitemap" | awk '/<loc>/ { gsub(/<loc>/,""); gsub(/<\/loc>/,""); print $1}' > "$urlList"
   urlCount=$(wc -l < "$urlList" | xargs)
   IO:success "Found $urlCount URLs"
-  postBody="$TMP_DIR/$host.sitemap.json"
+  day=$(date "+%Y-%m-%d")
+  postBody="$TMP_DIR/$host.$day.post.json"
   (
     printf '{ "host": "%s", "key":"%s", "keyLocation": "%s", "urlList": [' "$host" "$KEY" "$keyUrl"
     awk '{printf "\"%s\",\n",$1}' "$urlList"
