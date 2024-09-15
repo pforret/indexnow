@@ -6,31 +6,38 @@
 ![GH License](https://img.shields.io/github/license/pforret/indexnow)
 [![basher install](https://img.shields.io/badge/basher-install-white?logo=gnu-bash&style=flat)](https://www.basher.it/package/)
 
-# indexnow
+# pforret/indexnow
 
-submit URLs to search engine with IndexNow protocol
+![](assets/indexnow.jpg)
+
+submit URLs to search engine with [IndexNow protocol](https://www.bing.com/indexnow/getstarted)
 
 ## 🔥 Usage
 
 ```
 Program : indexnow  by peter@forret.com
-Version : v0.0.1 (Apr 22 16:07:13 2023)
+Version : v1.0.0 (Sep 15 19:06:37 2024)
 Purpose : submit URLs to search engine with IndexNow protocol
-Usage   : indexnow [-h] [-q] [-v] [-f] [-l <log_dir>] [-t <tmp_dir>] <action>
+Usage   : indexnow [-h] [-Q] [-V] [-f] [-A <API>] [-K <KEY>] [-L <LOG_DIR>] [-T <TMP_DIR>] <action> <input?>
 Flags, options and parameters:
     -h|--help        : [flag] show usage [default: off]
-    -q|--quiet       : [flag] no output [default: off]
-    -v|--verbose     : [flag] also show debug messages [default: off]
-    -f|--force       : [flag] do not ask for confirmation (always yes) [default: off]
-    -l|--log_dir <?> : [option] folder for log files   [default: /Users/pforret/log/script]
-    -t|--tmp_dir <?> : [option] folder for temp files  [default: /tmp/script]
-    <action>         : [choice] action to perform  [options: action1,action2,check,env,update]
+    -Q|--QUIET       : [flag] no output [default: off]
+    -V|--VERBOSE     : [flag] also show debug messages [default: off]
+    -f|--FORCE       : [flag] do not ask for confirmation (always yes) [default: off]
+    -A|--API <?>     : [option] API endpoint  [default: https://api.indexnow.org/IndexNow]
+    -K|--KEY <?>     : [option] API key for IndexNow - get one on https://www.bing.com/indexnow/getstarted
+    -L|--LOG_DIR <?> : [option] folder for log files   [default: /Users/pforret/log/indexnow]
+    -T|--TMP_DIR <?> : [option] folder for temp files  [default: .tmp]
+    <action>         : [choice] action to perform  [options: sitemap,url,key,check,env,update]
+    <input>          : [parameter] input url (1 page or sitemap) (optional)
                                   
 ### TIPS & EXAMPLES
-* use indexnow action1 to ...
-  indexnow action1
-* use indexnow action2 to ...
-  indexnow action2
+* use indexnow sitemap <url> to submit all URLs in a sitemap to Bing/Google
+  indexnow sitemap https://example.com/sitemap.xml
+* use indexnow url <url> to submit 1 URL to Bing/Google
+  indexnow url https://example.com/news/page100/
+* use indexnow key <url> to check the key file
+  indexnow -K AZ102512655155PMDGHERY4225865 key https://example.com
 * use indexnow check to check if this script is ready to execute and what values the options/flags are
   indexnow check
 * use indexnow env to generate an example .env file
@@ -38,8 +45,7 @@ Flags, options and parameters:
 * use indexnow update to update to the latest version
   indexnow update
 * >>> bash script created with pforret/bashew
-* >>> for bash development, also check out pforret/setver and pforret/progressbar
-```
+* >>> for bash development, also check out pforret/setver and pforret/progressbar```
 
 ## ⚡️ Examples
 
@@ -66,3 +72,4 @@ or with `git`
 * script created with [bashew](https://github.com/pforret/bashew)
 
 &copy; 2024 Peter Forret
+
