@@ -2,7 +2,7 @@
 ### ==============================================================================
 ### SO HOW DO YOU PROCEED WITH YOUR SCRIPT?
 ### 1. define the flags/options/parameters and defaults you need in Option:config()
-### 2. implement the different actions in Script:main() directly or with helper functions do_action1
+### 2. implement the different actions in Script:main() directly or with helper functions do_sitemap
 ### 3. implement helper functions you defined in previous step
 ### ==============================================================================
 
@@ -43,11 +43,12 @@ flag|h|help|show usage
 flag|Q|QUIET|no output
 flag|V|VERBOSE|also show debug messages
 flag|f|FORCE|do not ask for confirmation (always yes)
+option|A|API|API endpoint|https://api.indexnow.org/IndexNow
+option|K|KEY|API key for IndexNow - get one on https://www.bing.com/indexnow/getstarted
 option|L|LOG_DIR|folder for log files |$HOME/log/$script_prefix
-option|T|TMP_DIR|folder for temp files|/tmp/$script_prefix
-#option|W|WIDTH|width of the picture|800
-choice|1|action|action to perform|action1,action2,check,env,update
-param|?|input|input file/text
+option|T|TMP_DIR|folder for temp files|.tmp
+choice|1|action|action to perform|sitemap,url,key,check,env,update
+param|?|input|input url (1 page or sitemap)
 " -v -e '^#' -e '^\s*$'
 }
 
@@ -61,23 +62,33 @@ function Script:main() {
   Os:require "awk"
 
   case "${action,,}" in
-  action1)
-    #TIP: use «$script_prefix action1» to ...
-    #TIP:> $script_prefix action1
-    do_action1
+  sitemap)
+    #TIP: use «$script_prefix sitemap <url>» to submit all URLs in a sitemap to Bing/Google
+    #TIP:> $script_prefix sitemap https://example.com/sitemap.xml
+    # cf https://www.bing.com/indexnow/getstarted
+    homepage="$(echo "$input" | cut -d/ -f1-3)"
+    check_key "$homepage" && do_sitemap "$input"
     ;;
 
-  action2)
-    #TIP: use «$script_prefix action2» to ...
-    #TIP:> $script_prefix action2
-    do_action2
+  url)
+    #TIP: use «$script_prefix url <url>» to submit 1 URL to Bing/Google
+    #TIP:> $script_prefix url https://example.com/news/page100/
+    # cf https://www.bing.com/indexnow/getstarted
+    homepage="$(echo "$input" | cut -d/ -f1-3)"
+    check_key "$homepage" && do_url "$input"
     ;;
 
-  action3)
-    #TIP: use «$script_prefix action3» to ...
-    #TIP:> $script_prefix action3
+  key)
+    #TIP: use «$script_prefix key <url>» to check the key file
+    #TIP:> $script_prefix -K AZ102512655155PMDGHERY4225865 key https://example.com
     # Os:require "convert" "imagemagick"
-    # CONVERT $input $output
+    if [[ -z "$KEY" ]]; then
+      IO:die "No API key provided - use '$script_prefix -K 123456789 key https://www.example.com'"
+    fi
+    if [[ -z "$input" ]]; then
+      IO:die "No domain provided - use '$script_prefix key https://www.example.com'"
+    fi
+    check_key "$input"
     ;;
 
   check | env)
@@ -109,19 +120,57 @@ function Script:main() {
 ## Put your helper scripts here
 #####################################################################
 
-function do_action1() {
-  IO:log "action1"
-  # Examples of required binaries/scripts and how to install them
-  # Os:require "ffmpeg"
-  # Os:require "convert" "imagemagick"
-  # Os:require "IO:progressbar" "basher install pforret/IO:progressbar"
-  # (code)
-}
+function check_key() {
+  url="$1"
+  IO:print "Check key for $url ..."
+  keyUrl="$url/$KEY.txt"
+  keyLocal="$TMP_DIR/$KEY.txt"
+  IO:debug "Check $keyUrl"
+  curl -s "$keyUrl" > "$keyLocal"
+  [[ ! -f "$keyLocal" ]] && IO:die "Key file not found"
+  IO:debug "Check $keyLocal"
+  [[ $(cat "$keyLocal") != "$KEY" ]] && IO:die "Key file does not contain the correct key - get one on https://www.bing.com/indexnow/getstarted"
+  IO:success "Key file OK"
 
-function do_action2() {
-  IO:log "action2"
-  # (code)
+  }
 
+function do_sitemap() {
+  local sitemap homepage keyUrl host urlList postBody urlCount
+  sitemap="$1"
+  homepage="$(echo "$url" | cut -d/ -f1-3)"
+  keyUrl="$homepage/$KEY.txt"
+  host="$(echo "$url" | cut -d/ -f3)"
+  urlList="$TMP_DIR/$host.urls.txt"
+  curl -s "$sitemap" | awk '/<loc>/ { gsub(/<loc>/,""); gsub(/<\/loc>/,""); print $1}' > "$urlList"
+  urlCount=$(wc -l < "$urlList" | xargs)
+  IO:success "Found $urlCount URLs"
+  postBody="$TMP_DIR/$host.sitemap.json"
+  (
+    printf '{ "host": "%s", "key":"%s", "keyLocation": "%s", "urlList": [' "$host" "$KEY" "$keyUrl"
+    awk '{printf "\"%s\",\n",$1}' "$urlList"
+    printf '"%s"' "$homepage" # last one should have a trailing comma for valid JSON
+    printf "]}"
+  ) > "$postBody"
+  curl -X POST \
+    -H "Content-Type: application/json; charset=utf-8" \
+    -d "@$postBody" \
+    https://api.indexnow.org/IndexNow && IO:success "URLs from sitemap submitted!"
+
+  }
+
+function do_url() {
+  local url homepage keyUrl host
+  url="$1"
+  homepage="$(echo "$url" | cut -d/ -f1-3)"
+  keyUrl="$homepage/$KEY.txt"
+  host="$(echo "$url" | cut -d/ -f3)"
+  curl -X POST \
+    -H "Content-Type: application/json; charset=utf-8" \
+    -d "{ \"host\": \"$host\", \"key\":\"$KEY\", \"keyLocation\": \"$keyUrl\",
+      \"urlList\": [
+        \"$url\"
+    ]}" \
+    https://api.indexnow.org/IndexNow && IO:success "URL submitted!"
 }
 
 #####################################################################
